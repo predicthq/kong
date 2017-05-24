@@ -1,5 +1,56 @@
 ## [Unreleased][unreleased]
 
+### Changed
+
+- :warning: Previously, the `X-Forwarded-*` and `X-Real-IP` were trusted from
+  any client by default, and forwarded upstream. With the introduction of the
+  new `trusted_ips` property (see the below "Added" section), and to enforce
+  best security practices, Kong *does not* trust any client IP address by
+  default anymore. This will make Kong *not* forward incoming `X-Forwarded-*`
+  headers if not coming from configured, trusted IP addresses blocks. See the
+  `trusted_ips` property introduced in this release in the
+  [0.10 Configuration reference](https://getkong.org/docs/0.10.x/configuration/)
+  , or read the [0.10 Proxy reference](https://getkong.org/docs/0.10.x/proxy/).
+
+### Added
+
+- Kong now forwards new headers to your upstream services: `X-Forwarded-Host`,
+  `X-Forwarded-Port`, and `X-Forwarded-Proto`.
+  [#2236](https://github.com/Mashape/kong/pull/2236)
+- A new `trusted_ips` configuration property allows you to define a list of
+  trusted IP addresses blocks that are known to send trusted `X-Forwarded-*`
+  headers. Requests from trusted IPs will make Kong forward those headers
+  upstream. Requests from non-trusted IP addresses will make Kong override the
+  `X-Forwarded-*` headers with its own values. In addition, this property also
+  sets the ngx_http_realip_module `set_real_ip_from` directive(s), which makes
+  Kong trust the incoming `X-Real-IP` header as well, which is used for
+  operations such as rate-limiting by IP address, and that Kong forwards
+  upstream as well.
+  [#2236](https://github.com/Mashape/kong/pull/2236)
+- You can now configure the ngx_http_realip_module from the Kong configuration.
+  In addition to `trusted_ips` which sets the `set_real_ip_from` directives(s),
+  two new properties, `real_ip_header` and `real_ip_recursive` allow you to
+  configure the ngx_http_realip_module directives bearing the same name.
+  [#2236](https://github.com/Mashape/kong/pull/2236)
+- Support for the PROXY protocol. If the new `real_ip_header` configuration
+  property is set to `real_ip_header = proxy_protocol`, then Kong will append
+  the `proxy_protocol` parameter to the Nginx `listen` directive of the Kong
+  proxy port.
+  [#2236](https://github.com/Mashape/kong/pull/2236)
+- Ability to hide Kong-specific response headers. Two new configuration fields:
+  `server_tokens` and `latency_tokens` will respectively toggle whether the
+  `Server` and `X-Kong-*-Latency` headers should be sent to downstream clients.
+  [#2259](https://github.com/Mashape/kong/pull/2259)
+
+### Fixed
+
+- The `X-Forwarded-For` header sent to your upstream services by Kong is not
+  set from the Nginx `$proxy_add_x_forwarded_for` variable anymore. Instead,
+  Kong uses the `$realip_remote_addr` variable to append the real IP address
+  of a client, instead of `$remote_addr`, which can come from a previous proxy
+  hop.
+  [#2236](https://github.com/Mashape/kong/pull/2236)
+
 ## [0.10.3] - 2017/05/24
 
 ### Changed
