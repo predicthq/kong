@@ -24,8 +24,8 @@ _M.dao_insert_values = {
     return uuid()
   end,
   timestamp = function()
-    -- return time in UNIT millisecond, and PRECISION millisecond 
-    return math.floor(timestamp.get_utc_ms()) 
+    -- return time in UNIT millisecond, and PRECISION millisecond
+    return math.floor(timestamp.get_utc_ms())
   end
 }
 
@@ -658,6 +658,26 @@ function _M:record_migration(id, name)
   })
   if not res then return nil, err end
   return true
+end
+
+function _M:db_status(keyspace)
+
+  local query_string = fmt(
+    [[
+      SELECT now() FROM system.schema_keyspaces where keyspace_name ='%s'
+    ]], keyspace)
+
+  local rows, err = self:query(query_string, nil, {
+    prepared = false
+  })
+
+  if not rows then return "inactive", err end
+
+  if #rows > 0  then
+    return "active"
+  end
+
+  return "inactive"
 end
 
 return _M

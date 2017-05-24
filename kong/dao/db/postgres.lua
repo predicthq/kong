@@ -497,6 +497,23 @@ function _M:current_migrations()
   end
 end
 
+function _M:db_status(datname)
+
+  local query_string = fmt(
+    [[
+      SELECT * FROM pg_stat_database where datname='%s'
+    ]], datname)
+
+  local rows, err = self:query(query_string)
+  if not rows then return "inactive", err end
+
+  if #rows > 0  then
+    return "active"
+  end
+
+  return "inactive"
+end
+
 function _M:record_migration(id, name)
   local res, err = self:query{
     [[

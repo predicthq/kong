@@ -89,17 +89,28 @@ return {
           connections_accepted = tonumber(accepted),
           connections_handled = tonumber(handled),
           total_requests = tonumber(total)
-        },
-        database = {}
+        }
       }
 
-      for k, v in pairs(dao.daos) do
-        local count, err = v:count()
-        if err then
-          return helpers.responses.send_HTTP_INTERNAL_SERVER_ERROR(err)
-        end
-        status_response.database[k] = count
+      -- ping DB
+      local database = {}
+      local db_name = singletons.configuration.database
+      local db_rechable = false
+      local err
+
+      if db_name == "postgres" then
+        err, db_rechable = dao.db:db_status(singletons.configuration.pg_database)
+
+      elseif db_name == "cassandra" then
+        err, db_rechable = dao.db:db_status(singletons.configuration.cassandra_keyspace)
       end
+
+      if err ~= nil then
+        ngx.log(ngx.ERR, err)
+      end
+
+      database.rechable = db_rechable
+      status_response.database = database
 
       return helpers.responses.send_HTTP_OK(status_response)
     end
